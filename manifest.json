@@ -1,0 +1,9 @@
+{
+  "id": "ifx-linker",
+  "name": "IFX Linker",
+  "version": "1.0.0",
+  "minAppVersion": "1.4.0",
+  "description": "Converts Jira issue keys to links as you type and shows a hover preview.",
+  "author": "Nida Sharar",
+  "isDesktopOnly": false
+}

@@ -1,0 +1,36 @@
+.ifx-card {
+  max-width: 420px;
+  padding: 8px 10px;
+  font-size: var(--font-ui-small);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-s);
+}
+.ifx-popup {
+  position: fixed;
+  z-index: var(--layer-popover);
+}
+.ifx-card-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: var(--font-semibold);
+}
+.ifx-card-status {
+  padding: 0 6px;
+  font-size: var(--font-ui-smaller);
+  border-radius: 4px;
+  background: var(--background-modifier-hover);
+}
+.ifx-card-summary { margin-top: 4px; }
+.ifx-card-meta { margin-top: 2px; color: var(--text-muted); font-size: var(--font-ui-smaller); }
+.ifx-card-desc {
+  margin-top: 6px;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  max-height: 8em;
+  overflow: hidden;
+}
+.ifx-card-error { margin-top: 4px; color: var(--text-error); }
