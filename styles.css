@@ -8,10 +8,6 @@
   border-radius: 6px;
   box-shadow: var(--shadow-s);
 }
-.ifx-popup {
-  position: fixed;
-  z-index: var(--layer-popover);
-}
 .ifx-card-head {
   display: flex;
   gap: 8px;

@@ -30,6 +30,17 @@ export function renderCard(result: IssueResult, key: string): HTMLElement {
   return el;
 }
 
+// Plain text for Obsidian's native tooltip (Reading view).
+export function cardText(result: IssueResult, key: string): string {
+  if (!result.ok) {
+    return `${key}\n${result.message}`;
+  }
+  const i = result.issue;
+  const head = [i.key, i.status && `[${i.status}]`].filter(Boolean).join(" ");
+  const meta = [i.type, i.assignee].filter(Boolean).join(" | ");
+  return [head, i.summary, meta, i.description].filter(Boolean).join("\n");
+}
+
 // Editor hover: finds a key under the pointer on the line.
 export function editorHover(plugin: IfxLinkerPlugin) {
   return hoverTooltip(

@@ -1,6 +1,6 @@
-import { Plugin } from "obsidian";
+import { Plugin, setTooltip } from "obsidian";
 import { AutoLinker, keyRegex } from "./autolink";
-import { editorHover, renderCard } from "./hover";
+import { cardText, editorHover } from "./hover";
 import { JiraClient } from "./jira";
 import { DEFAULT_SETTINGS, IfxSettingTab, IfxSettings, prefixList } from "./settings";
 
@@ -8,8 +8,6 @@ export default class IfxLinkerPlugin extends Plugin {
   settings: IfxSettings = { ...DEFAULT_SETTINGS };
   jira!: JiraClient;
   private autoLinker!: AutoLinker;
-  private popup: HTMLElement | null = null;
-  private popupTimer: number | null = null;
 
   async onload() {
     await this.loadSettings();
@@ -20,11 +18,6 @@ export default class IfxLinkerPlugin extends Plugin {
     this.registerEvent(this.app.workspace.on("editor-change", (editor) => this.autoLinker.handle(editor)));
     this.registerEditorExtension(editorHover(this));
     this.registerDomEvent(document, "mouseover", (e) => this.onReadingHover(e));
-    this.registerDomEvent(document, "mouseout", (e) => this.onReadingOut(e));
-  }
-
-  onunload() {
-    this.hidePopup();
   }
 
   async loadSettings() {
@@ -55,44 +48,21 @@ export default class IfxLinkerPlugin extends Plugin {
     const target = e.target as HTMLElement | null;
     const a = target?.closest?.("a.external-link") as HTMLAnchorElement | null;
     // Editor links are handled by the CodeMirror tooltip.
-    if (!a || a.closest(".cm-editor")) {
+    if (!a || a.closest(".cm-editor") || a.dataset.ifxTip === "1") {
       return;
     }
     const key = this.keyFromAnchor(a);
     if (!key) {
       return;
     }
-    this.clearTimer();
-    this.popupTimer = window.setTimeout(async () => {
-      const result = await this.jira.getIssue(key);
-      this.hidePopup();
-      const card = renderCard(result, key);
-      card.addClass("ifx-popup");
-      document.body.appendChild(card);
-      const r = a.getBoundingClientRect();
-      card.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - card.offsetWidth - 8))}px`;
-      card.style.top = `${r.bottom + 6}px`;
-      this.popup = card;
-    }, 350);
-  }
-
-  private onReadingOut(e: MouseEvent) {
-    const target = e.target as HTMLElement | null;
-    if (target?.closest?.("a.external-link")) {
-      this.clearTimer();
-      this.hidePopup();
-    }
-  }
-
-  private clearTimer() {
-    if (this.popupTimer !== null) {
-      window.clearTimeout(this.popupTimer);
-      this.popupTimer = null;
-    }
-  }
-
-  private hidePopup() {
-    this.popup?.remove();
-    this.popup = null;
+    a.dataset.ifxTip = "1";
+    setTooltip(a, `${key}\nLoading...`, { placement: "top", delay: 300 });
+    void this.jira.getIssue(key).then((result) => {
+      setTooltip(a, cardText(result, key), { placement: "top", delay: 300 });
+      // Re-fire hover so the native tooltip shows the fetched text if still hovered.
+      if (a.matches(":hover")) {
+        a.dispatchEvent(new MouseEvent("mouseenter", { bubbles: false }));
+      }
+    });
   }
 }
