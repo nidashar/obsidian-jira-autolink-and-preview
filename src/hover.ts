@@ -98,7 +98,7 @@ export function editorHover(plugin: JiraLinkerPlugin) {
         const from = line.from + (m.index ?? 0);
         const to = from + m[0].length;
         if (pos >= from && pos <= to) {
-          found = { key: m[0], from, to };
+          found = { key: m[0].toUpperCase(), from, to };
           break;
         }
       }

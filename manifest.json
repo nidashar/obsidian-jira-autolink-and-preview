@@ -1,7 +1,7 @@
 {
   "id": "jira-linker",
   "name": "Jira Linker",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "minAppVersion": "1.4.0",
   "description": "Automatically links configured Jira issue keys in Obsidian and shows issue details on hover.",
   "author": "Nida Sharar",

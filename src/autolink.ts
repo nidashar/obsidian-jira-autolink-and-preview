@@ -14,7 +14,7 @@ export function keyRegex(prefixes: string[]): RegExp | null {
   }
   return new RegExp(
     `(?<![A-Z0-9_])(?:${prefixes.map(escapeRe).join("|")})-\\d+(?![A-Z0-9_])`,
-    "g"
+    "gi"
   );
 }
 
@@ -64,14 +64,16 @@ export class AutoLinker {
     const before = afterEnter ? line : line.slice(0, cursor.ch - 1);
     // Key at end of text; not preceded by a word char, "[", "(", "/", "|" or "-".
     const endRe = new RegExp(
-      `(?:^|[^\\w\\[(/|-])((?:${prefixes.map(escapeRe).join("|")})-\\d+)$`
+      `(?:^|[^\\w\\[(/|-])((?:${prefixes.map(escapeRe).join("|")})-\\d+)$`,
+      "i"
     );
     const match = endRe.exec(before);
     if (!match) {
       return;
     }
-    const key = match[1];
-    const start = before.length - key.length;
+    const typedKey = match[1];
+    const key = typedKey.toUpperCase();
+    const start = before.length - typedKey.length;
     const prefix = before.slice(0, start);
 
     if ((prefix.match(/`/g) || []).length % 2 === 1) {
@@ -90,12 +92,12 @@ export class AutoLinker {
       editor.replaceRange(
         link,
         { line: lineNo, ch: start },
-        { line: lineNo, ch: start + key.length }
+        { line: lineNo, ch: start + typedKey.length }
       );
       editor.setCursor(
         afterEnter
           ? cursor
-          : { line: cursor.line, ch: cursor.ch + (link.length - key.length) }
+          : { line: cursor.line, ch: cursor.ch + (link.length - typedKey.length) }
       );
     } finally {
       this.busy = false;

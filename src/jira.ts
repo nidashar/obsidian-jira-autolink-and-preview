@@ -16,6 +16,10 @@ export type IssueResult =
   | { ok: true; issue: IssueInfo }
   | { ok: false; message: string };
 
+export type ConnectionResult =
+  | { ok: true; displayName: string }
+  | { ok: false; message: string };
+
 interface CacheEntry {
   at: number;
   result: IssueResult;
@@ -51,6 +55,40 @@ export class JiraClient {
     this.generation++;
     this.cache.clear();
     this.inflight.clear();
+  }
+
+  async testConnection(): Promise<ConnectionResult> {
+    const { baseUrl, email } = this.plugin.settings;
+    const token = getToken(this.plugin);
+    if (!baseUrl || !email || !token) {
+      return {
+        ok: false,
+        message: "Enter the Jira URL, Atlassian email and API token before testing.",
+      };
+    }
+    try {
+      const res = await requestUrl({
+        url: `${baseUrl}/rest/api/3/myself`,
+        method: "GET",
+        headers: {
+          Authorization: "Basic " + btoa(`${email}:${token}`),
+          Accept: "application/json",
+        },
+        throw: false,
+      });
+      if (res.status === 401 || res.status === 403) {
+        return { ok: false, message: "Jira rejected the email or API token." };
+      }
+      if (res.status < 200 || res.status >= 300) {
+        return { ok: false, message: `Jira returned HTTP ${res.status}. Check the site URL.` };
+      }
+      return { ok: true, displayName: res.json?.displayName || "" };
+    } catch (error) {
+      return {
+        ok: false,
+        message: "Could not reach Jira: " + (error instanceof Error ? error.message : String(error)),
+      };
+    }
   }
 
   async getIssue(key: string): Promise<IssueResult> {
