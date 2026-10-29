@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import type JiraLinkerPlugin from "./main";
+import type JiraIssueLensPlugin from "./main";
 
-export interface JiraLinkerSettings {
+export interface JiraIssueLensSettings {
   baseUrl: string;
   prefixes: string;
   autoLink: boolean;
@@ -12,7 +12,7 @@ export interface JiraLinkerSettings {
   fallbackToken: string;
 }
 
-export const DEFAULT_SETTINGS: JiraLinkerSettings = {
+export const DEFAULT_SETTINGS: JiraIssueLensSettings = {
   baseUrl: "",
   prefixes: "",
   autoLink: true,
@@ -22,7 +22,7 @@ export const DEFAULT_SETTINGS: JiraLinkerSettings = {
   fallbackToken: "",
 };
 
-const SECRET_ID = "jira-linker-api-token";
+const SECRET_ID = "nidashar-jira-issue-lens-api-token";
 const API_TOKEN_URL = "https://id.atlassian.com/manage-profile/security/api-tokens";
 
 type ValidationResult =
@@ -84,7 +84,7 @@ function setValidationState(
   result: ValidationResult
 ): void {
   setting.setDesc(result.message);
-  input.classList.toggle("jira-linker-invalid-input", !result.valid);
+  input.classList.toggle("jira-issue-lens-invalid-input", !result.valid);
   input.setAttribute("aria-invalid", String(!result.valid));
 }
 
@@ -117,7 +117,7 @@ function secretStorage(app: App): SecretStorageLike | null {
   return null;
 }
 
-export function getToken(plugin: JiraLinkerPlugin): string {
+export function getToken(plugin: JiraIssueLensPlugin): string {
   const store = secretStorage(plugin.app);
   if (store) {
     return store.getSecret(SECRET_ID) || plugin.settings.fallbackToken;
@@ -125,7 +125,7 @@ export function getToken(plugin: JiraLinkerPlugin): string {
   return plugin.settings.fallbackToken;
 }
 
-export async function setToken(plugin: JiraLinkerPlugin, token: string): Promise<void> {
+export async function setToken(plugin: JiraIssueLensPlugin, token: string): Promise<void> {
   const store = secretStorage(plugin.app);
   if (store) {
     store.setSecret(SECRET_ID, token);
@@ -139,7 +139,7 @@ export async function setToken(plugin: JiraLinkerPlugin, token: string): Promise
   await plugin.saveSettings();
 }
 
-export async function migrateTokenToSecretStorage(plugin: JiraLinkerPlugin): Promise<void> {
+export async function migrateTokenToSecretStorage(plugin: JiraIssueLensPlugin): Promise<void> {
   const store = secretStorage(plugin.app);
   const fallbackToken = plugin.settings.fallbackToken;
   if (!store || !fallbackToken) {
@@ -152,15 +152,15 @@ export async function migrateTokenToSecretStorage(plugin: JiraLinkerPlugin): Pro
   await plugin.saveSettings();
 }
 
-export function prefixList(settings: JiraLinkerSettings): string[] {
+export function prefixList(settings: JiraIssueLensSettings): string[] {
   return settings.prefixes
     .split(",")
     .map((p) => p.trim().toUpperCase())
     .filter((p) => /^[A-Z][A-Z0-9_]*$/.test(p));
 }
 
-export class JiraLinkerSettingTab extends PluginSettingTab {
-  constructor(app: App, private plugin: JiraLinkerPlugin) {
+export class JiraIssueLensSettingTab extends PluginSettingTab {
+  constructor(app: App, private plugin: JiraIssueLensPlugin) {
     super(app, plugin);
   }
 
@@ -169,7 +169,7 @@ export class JiraLinkerSettingTab extends PluginSettingTab {
     containerEl.empty();
     const s = this.plugin.settings;
 
-    containerEl.createEl("h2", { text: "Jira Linker setup" });
+    containerEl.createEl("h2", { text: "Jira Issue Lens setup" });
     containerEl.createEl("p", {
       text: "Add your Jira URL and project prefixes to create links. Add your Atlassian email and API token to show issue details on hover.",
     });

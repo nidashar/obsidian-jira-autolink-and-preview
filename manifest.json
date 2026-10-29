@@ -1,9 +1,10 @@
 {
-  "id": "jira-linker",
-  "name": "Jira Linker",
-  "version": "1.0.2",
+  "id": "nidashar-jira-issue-lens",
+  "name": "Jira Issue Lens",
+  "version": "1.0.3",
   "minAppVersion": "1.4.0",
-  "description": "Automatically links configured Jira issue keys in Obsidian and shows issue details on hover.",
+  "description": "Links configured Jira issue keys as you type and shows live issue details on hover.",
   "author": "Nida Sharar",
+  "authorUrl": "https://github.com/nidashar",
   "isDesktopOnly": false
 }

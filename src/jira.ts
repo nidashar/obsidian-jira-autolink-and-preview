@@ -1,5 +1,5 @@
 import { requestUrl } from "obsidian";
-import type JiraLinkerPlugin from "./main";
+import type JiraIssueLensPlugin from "./main";
 import { getToken } from "./settings";
 
 export interface IssueInfo {
@@ -49,7 +49,7 @@ export class JiraClient {
   private inflight = new Map<string, Promise<IssueResult>>();
   private generation = 0;
 
-  constructor(private plugin: JiraLinkerPlugin) {}
+  constructor(private plugin: JiraIssueLensPlugin) {}
 
   clearCache(): void {
     this.generation++;
@@ -130,7 +130,7 @@ export class JiraClient {
     token: string
   ): Promise<IssueResult> {
     if (!baseUrl || !email || !token) {
-      return { ok: false, message: "Set Jira URL, email and API token in the Jira Linker settings." };
+      return { ok: false, message: "Set Jira URL, email and API token in the Jira Issue Lens settings." };
     }
     const url = `${baseUrl}/rest/api/3/issue/${encodeURIComponent(key)}?fields=summary,status,issuetype,assignee,description`;
     try {

@@ -1,5 +1,5 @@
 import { hoverTooltip, Tooltip } from "@codemirror/view";
-import type JiraLinkerPlugin from "./main";
+import type JiraIssueLensPlugin from "./main";
 import type { IssueResult } from "./jira";
 import { keyRegex } from "./autolink";
 import { prefixList } from "./settings";
@@ -46,26 +46,26 @@ function isExcludedInlineContext(line: string, start: number): boolean {
 
 export function renderCard(result: IssueResult, key: string): HTMLElement {
   const el = document.createElement("div");
-  el.className = "jira-linker-card";
+  el.className = "jira-issue-lens-card";
   if (!result.ok) {
-    const head = el.createDiv({ cls: "jira-linker-card-head", text: key });
+    const head = el.createDiv({ cls: "jira-issue-lens-card-head", text: key });
     head.setAttr("aria-label", key);
-    el.createDiv({ cls: "jira-linker-card-error", text: result.message });
+    el.createDiv({ cls: "jira-issue-lens-card-error", text: result.message });
     return el;
   }
   const i = result.issue;
-  const head = el.createDiv({ cls: "jira-linker-card-head" });
-  head.createSpan({ cls: "jira-linker-card-key", text: i.key });
+  const head = el.createDiv({ cls: "jira-issue-lens-card-head" });
+  head.createSpan({ cls: "jira-issue-lens-card-key", text: i.key });
   if (i.status) {
-    head.createSpan({ cls: "jira-linker-card-status", text: i.status });
+    head.createSpan({ cls: "jira-issue-lens-card-status", text: i.status });
   }
-  el.createDiv({ cls: "jira-linker-card-summary", text: i.summary });
+  el.createDiv({ cls: "jira-issue-lens-card-summary", text: i.summary });
   el.createDiv({
-    cls: "jira-linker-card-meta",
+    cls: "jira-issue-lens-card-meta",
     text: [i.type, i.assignee].filter(Boolean).join(" | "),
   });
   if (i.description) {
-    el.createDiv({ cls: "jira-linker-card-desc", text: i.description });
+    el.createDiv({ cls: "jira-issue-lens-card-desc", text: i.description });
   }
   return el;
 }
@@ -82,7 +82,7 @@ export function cardText(result: IssueResult, key: string): string {
 }
 
 // Editor hover: finds a key under the pointer on the line.
-export function editorHover(plugin: JiraLinkerPlugin) {
+export function editorHover(plugin: JiraIssueLensPlugin) {
   return hoverTooltip(
     async (view, pos): Promise<Tooltip | null> => {
       if (!plugin.settings.hoverPreview) {

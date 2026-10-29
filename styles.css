@@ -1,4 +1,4 @@
-.jira-linker-card {
+.jira-issue-lens-card {
   max-width: 420px;
   padding: 8px 10px;
   font-size: var(--font-ui-small);
@@ -8,30 +8,30 @@
   border-radius: 6px;
   box-shadow: var(--shadow-s);
 }
-.jira-linker-card-head {
+.jira-issue-lens-card-head {
   display: flex;
   gap: 8px;
   align-items: center;
   font-weight: var(--font-semibold);
 }
-.jira-linker-card-status {
+.jira-issue-lens-card-status {
   padding: 0 6px;
   font-size: var(--font-ui-smaller);
   border-radius: 4px;
   background: var(--background-modifier-hover);
 }
-.jira-linker-card-summary { margin-top: 4px; }
-.jira-linker-card-meta { margin-top: 2px; color: var(--text-muted); font-size: var(--font-ui-smaller); }
-.jira-linker-card-desc {
+.jira-issue-lens-card-summary { margin-top: 4px; }
+.jira-issue-lens-card-meta { margin-top: 2px; color: var(--text-muted); font-size: var(--font-ui-smaller); }
+.jira-issue-lens-card-desc {
   margin-top: 6px;
   color: var(--text-muted);
   white-space: pre-wrap;
   max-height: 8em;
   overflow: hidden;
 }
-.jira-linker-card-error { margin-top: 4px; color: var(--text-error); }
+.jira-issue-lens-card-error { margin-top: 4px; color: var(--text-error); }
 
-.jira-linker-invalid-input {
+.jira-issue-lens-invalid-input {
   border-color: var(--text-error) !important;
   box-shadow: 0 0 0 1px var(--text-error);
 }
