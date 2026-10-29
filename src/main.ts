@@ -1,4 +1,4 @@
-import { Plugin, setTooltip } from "obsidian";
+import { Notice, Plugin, setTooltip } from "obsidian";
 import { AutoLinker } from "./autolink";
 import { cardText, editorHover } from "./hover";
 import { JiraClient } from "./jira";
@@ -6,8 +6,10 @@ import {
   DEFAULT_SETTINGS,
   JiraLinkerSettingTab,
   JiraLinkerSettings,
+  getToken,
   migrateTokenToSecretStorage,
   prefixList,
+  validateJiraBaseUrl,
 } from "./settings";
 
 export default class JiraLinkerPlugin extends Plugin {
@@ -25,6 +27,7 @@ export default class JiraLinkerPlugin extends Plugin {
     this.registerEvent(this.app.workspace.on("editor-change", (editor) => this.autoLinker.handle(editor)));
     this.registerEditorExtension(editorHover(this));
     this.registerDomEvent(document, "mouseover", (e) => this.onReadingHover(e));
+    this.showSetupNotice();
   }
 
   async loadSettings() {
@@ -33,6 +36,25 @@ export default class JiraLinkerPlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
+  }
+
+  private showSetupNotice(): void {
+    const hasLinkSettings = Boolean(
+      validateJiraBaseUrl(this.settings.baseUrl).valid && prefixList(this.settings).length
+    );
+    if (!hasLinkSettings) {
+      new Notice(
+        "Jira Linker needs setup. Open Settings → Jira Linker and add your Jira URL and project prefixes. Add your Atlassian email and API token for hover previews.",
+        12_000
+      );
+      return;
+    }
+    if (this.settings.hoverPreview && (!this.settings.email || !getToken(this))) {
+      new Notice(
+        "Jira Linker: add your Atlassian email and API token in Settings → Jira Linker to enable hover previews.",
+        10_000
+      );
+    }
   }
 
   private keyFromAnchor(a: HTMLAnchorElement): string | null {
@@ -50,8 +72,9 @@ export default class JiraLinkerPlugin extends Plugin {
     } catch {
       return null;
     }
-    const match = /^([A-Z][A-Z0-9_]*-\d+)$/.exec(issuePath);
-    return match && prefixes.includes(match[1].split("-")[0]) ? match[1] : null;
+    const match = /^([A-Z][A-Z0-9_]*-\d+)$/i.exec(issuePath);
+    const key = match?.[1].toUpperCase();
+    return key && prefixes.includes(key.split("-")[0]) ? key : null;
   }
 
   private onReadingHover(e: MouseEvent) {
