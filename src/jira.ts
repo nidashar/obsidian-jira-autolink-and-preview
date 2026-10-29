@@ -1,5 +1,5 @@
 import { requestUrl } from "obsidian";
-import type IfxLinkerPlugin from "./main";
+import type JiraLinkerPlugin from "./main";
 import { getToken } from "./settings";
 
 export interface IssueInfo {
@@ -43,40 +43,56 @@ function adfToText(node: unknown): string {
 export class JiraClient {
   private cache = new Map<string, CacheEntry>();
   private inflight = new Map<string, Promise<IssueResult>>();
+  private generation = 0;
 
-  constructor(private plugin: IfxLinkerPlugin) {}
+  constructor(private plugin: JiraLinkerPlugin) {}
 
   clearCache(): void {
+    this.generation++;
     this.cache.clear();
+    this.inflight.clear();
   }
 
   async getIssue(key: string): Promise<IssueResult> {
+    const { baseUrl, email } = this.plugin.settings;
+    const token = getToken(this.plugin);
+    const requestKey = JSON.stringify([baseUrl, email, key]);
+    const generation = this.generation;
     const ttl = this.plugin.settings.cacheMinutes * 60_000;
-    const hit = this.cache.get(key);
+    const hit = this.cache.get(requestKey);
     if (hit && Date.now() - hit.at < ttl) {
       return hit.result;
     }
-    const pending = this.inflight.get(key);
+    const pending = this.inflight.get(requestKey);
     if (pending) {
       return pending;
     }
-    const p = this.fetchIssue(key).then((result) => {
+    const p = this.fetchIssue(key, baseUrl, email, token).then((result) => {
       // Do not cache transient failures.
-      if (result.ok || result.message.startsWith("Issue not found")) {
-        this.cache.set(key, { at: Date.now(), result });
+      if (
+        generation === this.generation &&
+        (result.ok || result.message.startsWith("Issue not found"))
+      ) {
+        this.cache.set(requestKey, { at: Date.now(), result });
       }
-      this.inflight.delete(key);
       return result;
+    }).finally(() => {
+      if (this.inflight.get(requestKey) === p) {
+        this.inflight.delete(requestKey);
+      }
     });
-    this.inflight.set(key, p);
+    this.inflight.set(requestKey, p);
     return p;
   }
 
-  private async fetchIssue(key: string): Promise<IssueResult> {
-    const { baseUrl, email } = this.plugin.settings;
-    const token = getToken(this.plugin);
+  private async fetchIssue(
+    key: string,
+    baseUrl: string,
+    email: string,
+    token: string
+  ): Promise<IssueResult> {
     if (!baseUrl || !email || !token) {
-      return { ok: false, message: "Set Jira URL, email and API token in the IFX Linker settings." };
+      return { ok: false, message: "Set Jira URL, email and API token in the Jira Linker settings." };
     }
     const url = `${baseUrl}/rest/api/3/issue/${encodeURIComponent(key)}?fields=summary,status,issuetype,assignee,description`;
     try {

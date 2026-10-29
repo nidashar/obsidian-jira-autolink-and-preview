@@ -1,5 +1,5 @@
 import { Editor } from "obsidian";
-import type IfxLinkerPlugin from "./main";
+import type JiraLinkerPlugin from "./main";
 import { prefixList } from "./settings";
 
 const DELIMITER = /[\s.,;:!?)\]]/;
@@ -12,7 +12,10 @@ export function keyRegex(prefixes: string[]): RegExp | null {
   if (prefixes.length === 0) {
     return null;
   }
-  return new RegExp(`(?:${prefixes.map(escapeRe).join("|")})-\\d+`, "g");
+  return new RegExp(
+    `(?<![A-Z0-9_])(?:${prefixes.map(escapeRe).join("|")})-\\d+(?![A-Z0-9_])`,
+    "g"
+  );
 }
 
 function inCodeOrFrontmatter(editor: Editor, lineNo: number): boolean {
@@ -40,7 +43,7 @@ function inCodeOrFrontmatter(editor: Editor, lineNo: number): boolean {
 export class AutoLinker {
   private busy = false;
 
-  constructor(private plugin: IfxLinkerPlugin) {}
+  constructor(private plugin: JiraLinkerPlugin) {}
 
   handle(editor: Editor): void {
     const s = this.plugin.settings;
@@ -52,11 +55,13 @@ export class AutoLinker {
       return;
     }
     const cursor = editor.getCursor();
-    const line = editor.getLine(cursor.line);
-    if (cursor.ch < 1 || !DELIMITER.test(line[cursor.ch - 1])) {
+    const afterEnter = cursor.ch === 0 && cursor.line > 0;
+    const lineNo = afterEnter ? cursor.line - 1 : cursor.line;
+    const line = editor.getLine(lineNo);
+    if (!afterEnter && (cursor.ch < 1 || !DELIMITER.test(line[cursor.ch - 1]))) {
       return;
     }
-    const before = line.slice(0, cursor.ch - 1);
+    const before = afterEnter ? line : line.slice(0, cursor.ch - 1);
     // Key at end of text; not preceded by a word char, "[", "(", "/", "|" or "-".
     const endRe = new RegExp(
       `(?:^|[^\\w\\[(/|-])((?:${prefixes.map(escapeRe).join("|")})-\\d+)$`
@@ -75,7 +80,7 @@ export class AutoLinker {
     if ((prefix.match(/\[/g) || []).length > (prefix.match(/\]/g) || []).length) {
       return;
     }
-    if (inCodeOrFrontmatter(editor, cursor.line)) {
+    if (inCodeOrFrontmatter(editor, lineNo)) {
       return;
     }
 
@@ -84,10 +89,14 @@ export class AutoLinker {
     try {
       editor.replaceRange(
         link,
-        { line: cursor.line, ch: start },
-        { line: cursor.line, ch: start + key.length }
+        { line: lineNo, ch: start },
+        { line: lineNo, ch: start + key.length }
       );
-      editor.setCursor({ line: cursor.line, ch: cursor.ch + (link.length - key.length) });
+      editor.setCursor(
+        afterEnter
+          ? cursor
+          : { line: cursor.line, ch: cursor.ch + (link.length - key.length) }
+      );
     } finally {
       this.busy = false;
     }

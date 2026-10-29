@@ -1,31 +1,71 @@
 import { hoverTooltip, Tooltip } from "@codemirror/view";
-import type IfxLinkerPlugin from "./main";
+import type JiraLinkerPlugin from "./main";
 import type { IssueResult } from "./jira";
 import { keyRegex } from "./autolink";
 import { prefixList } from "./settings";
 
+function isInFencedCode(
+  doc: { line(number: number): { text: string } },
+  lineNumber: number
+): boolean {
+  let fence: "```" | "~~~" | null = null;
+  for (let i = 1; i <= lineNumber; i++) {
+    const match = /^\s*(```|~~~)/.exec(doc.line(i).text);
+    if (!match) {
+      continue;
+    }
+    if (!fence) {
+      fence = match[1] as "```" | "~~~";
+    } else if (match[1] === fence) {
+      fence = null;
+    }
+  }
+  return fence !== null;
+}
+
+function isExcludedInlineContext(line: string, start: number): boolean {
+  const before = line.slice(0, start);
+  let openCodeTicks: number | null = null;
+  for (const match of before.matchAll(/(?<!\\)(`+)/g)) {
+    const tickCount = match[1].length;
+    if (openCodeTicks === null) {
+      openCodeTicks = tickCount;
+    } else if (openCodeTicks === tickCount) {
+      openCodeTicks = null;
+    }
+  }
+  if (openCodeTicks !== null) {
+    return true;
+  }
+  const linkDestinationStart = before.lastIndexOf("](");
+  if (linkDestinationStart >= 0 && before.lastIndexOf(")") < linkDestinationStart) {
+    return true;
+  }
+  return /\b(?:https?:\/\/|www\.)\S*$/i.test(before);
+}
+
 export function renderCard(result: IssueResult, key: string): HTMLElement {
   const el = document.createElement("div");
-  el.className = "ifx-card";
+  el.className = "jira-linker-card";
   if (!result.ok) {
-    const head = el.createDiv({ cls: "ifx-card-head", text: key });
+    const head = el.createDiv({ cls: "jira-linker-card-head", text: key });
     head.setAttr("aria-label", key);
-    el.createDiv({ cls: "ifx-card-error", text: result.message });
+    el.createDiv({ cls: "jira-linker-card-error", text: result.message });
     return el;
   }
   const i = result.issue;
-  const head = el.createDiv({ cls: "ifx-card-head" });
-  head.createSpan({ cls: "ifx-card-key", text: i.key });
+  const head = el.createDiv({ cls: "jira-linker-card-head" });
+  head.createSpan({ cls: "jira-linker-card-key", text: i.key });
   if (i.status) {
-    head.createSpan({ cls: "ifx-card-status", text: i.status });
+    head.createSpan({ cls: "jira-linker-card-status", text: i.status });
   }
-  el.createDiv({ cls: "ifx-card-summary", text: i.summary });
+  el.createDiv({ cls: "jira-linker-card-summary", text: i.summary });
   el.createDiv({
-    cls: "ifx-card-meta",
+    cls: "jira-linker-card-meta",
     text: [i.type, i.assignee].filter(Boolean).join(" | "),
   });
   if (i.description) {
-    el.createDiv({ cls: "ifx-card-desc", text: i.description });
+    el.createDiv({ cls: "jira-linker-card-desc", text: i.description });
   }
   return el;
 }
@@ -42,7 +82,7 @@ export function cardText(result: IssueResult, key: string): string {
 }
 
 // Editor hover: finds a key under the pointer on the line.
-export function editorHover(plugin: IfxLinkerPlugin) {
+export function editorHover(plugin: JiraLinkerPlugin) {
   return hoverTooltip(
     async (view, pos): Promise<Tooltip | null> => {
       if (!plugin.settings.hoverPreview) {
@@ -66,6 +106,12 @@ export function editorHover(plugin: IfxLinkerPlugin) {
         return null;
       }
       const { key, from, to } = found;
+      if (
+        isInFencedCode(view.state.doc, line.number) ||
+        isExcludedInlineContext(line.text, from - line.from)
+      ) {
+        return null;
+      }
       const result = await plugin.jira.getIssue(key);
       return {
         pos: from,

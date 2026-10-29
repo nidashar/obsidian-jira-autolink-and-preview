@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import type IfxLinkerPlugin from "./main";
+import type JiraLinkerPlugin from "./main";
 
-export interface IfxSettings {
+export interface JiraLinkerSettings {
   baseUrl: string;
   prefixes: string;
   autoLink: boolean;
@@ -12,9 +12,9 @@ export interface IfxSettings {
   fallbackToken: string;
 }
 
-export const DEFAULT_SETTINGS: IfxSettings = {
-  baseUrl: "https://collinsongroup.atlassian.net",
-  prefixes: "IFX",
+export const DEFAULT_SETTINGS: JiraLinkerSettings = {
+  baseUrl: "",
+  prefixes: "",
   autoLink: true,
   hoverPreview: true,
   email: "",
@@ -22,7 +22,7 @@ export const DEFAULT_SETTINGS: IfxSettings = {
   fallbackToken: "",
 };
 
-const SECRET_ID = "ifx-linker-jira-token";
+const SECRET_ID = "jira-linker-api-token";
 
 interface SecretStorageLike {
   getSecret(id: string): string | null | undefined;
@@ -37,33 +37,50 @@ function secretStorage(app: App): SecretStorageLike | null {
   return null;
 }
 
-export function getToken(plugin: IfxLinkerPlugin): string {
+export function getToken(plugin: JiraLinkerPlugin): string {
   const store = secretStorage(plugin.app);
   if (store) {
-    return store.getSecret(SECRET_ID) || "";
+    return store.getSecret(SECRET_ID) || plugin.settings.fallbackToken;
   }
   return plugin.settings.fallbackToken;
 }
 
-export async function setToken(plugin: IfxLinkerPlugin, token: string): Promise<void> {
+export async function setToken(plugin: JiraLinkerPlugin, token: string): Promise<void> {
   const store = secretStorage(plugin.app);
   if (store) {
     store.setSecret(SECRET_ID, token);
+    if (plugin.settings.fallbackToken) {
+      plugin.settings.fallbackToken = "";
+      await plugin.saveSettings();
+    }
     return;
   }
   plugin.settings.fallbackToken = token;
   await plugin.saveSettings();
 }
 
-export function prefixList(settings: IfxSettings): string[] {
+export async function migrateTokenToSecretStorage(plugin: JiraLinkerPlugin): Promise<void> {
+  const store = secretStorage(plugin.app);
+  const fallbackToken = plugin.settings.fallbackToken;
+  if (!store || !fallbackToken) {
+    return;
+  }
+  if (!store.getSecret(SECRET_ID)) {
+    store.setSecret(SECRET_ID, fallbackToken);
+  }
+  plugin.settings.fallbackToken = "";
+  await plugin.saveSettings();
+}
+
+export function prefixList(settings: JiraLinkerSettings): string[] {
   return settings.prefixes
     .split(",")
     .map((p) => p.trim().toUpperCase())
     .filter((p) => /^[A-Z][A-Z0-9_]*$/.test(p));
 }
 
-export class IfxSettingTab extends PluginSettingTab {
-  constructor(app: App, private plugin: IfxLinkerPlugin) {
+export class JiraLinkerSettingTab extends PluginSettingTab {
+  constructor(app: App, private plugin: JiraLinkerPlugin) {
     super(app, plugin);
   }
 
@@ -78,13 +95,14 @@ export class IfxSettingTab extends PluginSettingTab {
       .addText((t) =>
         t.setValue(s.baseUrl).onChange(async (v) => {
           s.baseUrl = v.trim().replace(/\/+$/, "");
+          this.plugin.jira.clearCache();
           await this.plugin.saveSettings();
         })
       );
 
     new Setting(containerEl)
       .setName("Project prefixes")
-      .setDesc("Comma separated, for example IFX, ABC")
+      .setDesc("Comma separated, for example ABC, XYZ")
       .addText((t) =>
         t.setValue(s.prefixes).onChange(async (v) => {
           s.prefixes = v;
@@ -117,6 +135,7 @@ export class IfxSettingTab extends PluginSettingTab {
       .addText((t) =>
         t.setValue(s.email).onChange(async (v) => {
           s.email = v.trim();
+          this.plugin.jira.clearCache();
           await this.plugin.saveSettings();
         })
       );
@@ -143,6 +162,7 @@ export class IfxSettingTab extends PluginSettingTab {
         t.setValue(String(s.cacheMinutes)).onChange(async (v) => {
           const n = Number(v);
           s.cacheMinutes = Number.isFinite(n) && n >= 0 ? n : 10;
+          this.plugin.jira.clearCache();
           await this.plugin.saveSettings();
         })
       );

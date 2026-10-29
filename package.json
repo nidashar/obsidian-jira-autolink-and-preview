@@ -1,7 +1,7 @@
 {
-  "name": "obsidian-ifx-linker",
+  "name": "obsidian-jira-linker",
   "version": "1.0.0",
-  "description": "Auto-links Jira issue keys as you type and shows a hover preview.",
+  "description": "Automatically links configured Jira issue keys in Obsidian and shows issue details on hover.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",

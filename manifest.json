@@ -1,9 +1,9 @@
 {
-  "id": "ifx-linker",
-  "name": "IFX Linker",
+  "id": "jira-linker",
+  "name": "Jira Linker",
   "version": "1.0.0",
   "minAppVersion": "1.4.0",
-  "description": "Converts Jira issue keys to links as you type and shows a hover preview.",
+  "description": "Automatically links configured Jira issue keys in Obsidian and shows issue details on hover.",
   "author": "Nida Sharar",
   "isDesktopOnly": false
 }
