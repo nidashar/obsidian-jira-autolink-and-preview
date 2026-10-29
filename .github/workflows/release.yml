@@ -16,6 +16,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+      - name: Verify tag matches manifest version
+        run: |
+          expected_version="$(node -p "require('./manifest.json').version")"
+          test "${GITHUB_REF_NAME}" = "${expected_version}"
       - run: npm ci
       - run: npm run build
       - name: Create release

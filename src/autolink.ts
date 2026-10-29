@@ -1,5 +1,5 @@
 import { Editor } from "obsidian";
-import type JiraLinkerPlugin from "./main";
+import type JiraIssueLensPlugin from "./main";
 import { prefixList } from "./settings";
 
 const DELIMITER = /[\s.,;:!?)\]]/;
@@ -43,7 +43,7 @@ function inCodeOrFrontmatter(editor: Editor, lineNo: number): boolean {
 export class AutoLinker {
   private busy = false;
 
-  constructor(private plugin: JiraLinkerPlugin) {}
+  constructor(private plugin: JiraIssueLensPlugin) {}
 
   handle(editor: Editor): void {
     const s = this.plugin.settings;

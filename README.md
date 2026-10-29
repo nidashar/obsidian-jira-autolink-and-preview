@@ -1,4 +1,4 @@
-# Jira Linker
+# Jira Issue Lens
 
 Automatically converts configured Jira Cloud issue keys into clickable links in Obsidian and shows issue details when you hover them.
 
@@ -12,12 +12,12 @@ Existing notes are not modified.
 ## Install (BRAT)
 
 1. Install the BRAT community plugin.
-2. In BRAT, choose **Add Beta Plugin** and enter `https://github.com/nidashar/obsidian-jira-autolink-and-preview`.
-3. Enable Jira Linker.
+2. In BRAT, choose **Add Beta Plugin** and enter `https://github.com/nidashar/obsidian-jira-issue-lens`.
+3. Enable Jira Issue Lens.
 
 ## Install (manual)
 
-Copy `main.js`, `manifest.json` and `styles.css` into `<vault>/.obsidian/plugins/jira-linker/`, then enable the plugin.
+Copy `main.js`, `manifest.json` and `styles.css` into `<vault>/.obsidian/plugins/nidashar-jira-issue-lens/`, then enable the plugin.
 
 ## Settings
 
@@ -44,7 +44,7 @@ npm run build   # type check + production bundle to main.js
 npm run dev     # watch mode
 ```
 
-Symlink or copy the repo into `<vault>/.obsidian/plugins/jira-linker/` to test.
+Symlink or copy the repo into `<vault>/.obsidian/plugins/nidashar-jira-issue-lens/` to test.
 
 ## Release
 

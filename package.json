@@ -1,7 +1,7 @@
 {
-  "name": "obsidian-jira-linker",
-  "version": "1.0.2",
-  "description": "Automatically links configured Jira issue keys in Obsidian and shows issue details on hover.",
+  "name": "obsidian-jira-issue-lens",
+  "version": "1.0.3",
+  "description": "Links configured Jira issue keys as you type and shows live issue details on hover.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",

@@ -4,16 +4,16 @@ import { cardText, editorHover } from "./hover";
 import { JiraClient } from "./jira";
 import {
   DEFAULT_SETTINGS,
-  JiraLinkerSettingTab,
-  JiraLinkerSettings,
+  JiraIssueLensSettingTab,
+  JiraIssueLensSettings,
   getToken,
   migrateTokenToSecretStorage,
   prefixList,
   validateJiraBaseUrl,
 } from "./settings";
 
-export default class JiraLinkerPlugin extends Plugin {
-  settings: JiraLinkerSettings = { ...DEFAULT_SETTINGS };
+export default class JiraIssueLensPlugin extends Plugin {
+  settings: JiraIssueLensSettings = { ...DEFAULT_SETTINGS };
   jira!: JiraClient;
   private autoLinker!: AutoLinker;
 
@@ -23,7 +23,7 @@ export default class JiraLinkerPlugin extends Plugin {
     this.jira = new JiraClient(this);
     this.autoLinker = new AutoLinker(this);
 
-    this.addSettingTab(new JiraLinkerSettingTab(this.app, this));
+    this.addSettingTab(new JiraIssueLensSettingTab(this.app, this));
     this.registerEvent(this.app.workspace.on("editor-change", (editor) => this.autoLinker.handle(editor)));
     this.registerEditorExtension(editorHover(this));
     this.registerDomEvent(document, "mouseover", (e) => this.onReadingHover(e));
@@ -44,14 +44,14 @@ export default class JiraLinkerPlugin extends Plugin {
     );
     if (!hasLinkSettings) {
       new Notice(
-        "Jira Linker needs setup. Open Settings → Jira Linker and add your Jira URL and project prefixes. Add your Atlassian email and API token for hover previews.",
+        "Jira Issue Lens needs setup. Open Settings → Jira Issue Lens and add your Jira URL and project prefixes. Add your Atlassian email and API token for hover previews.",
         12_000
       );
       return;
     }
     if (this.settings.hoverPreview && (!this.settings.email || !getToken(this))) {
       new Notice(
-        "Jira Linker: add your Atlassian email and API token in Settings → Jira Linker to enable hover previews.",
+        "Jira Issue Lens: add your Atlassian email and API token in Settings → Jira Issue Lens to enable hover previews.",
         10_000
       );
     }
@@ -84,14 +84,14 @@ export default class JiraLinkerPlugin extends Plugin {
     const target = e.target as HTMLElement | null;
     const a = target?.closest?.("a.external-link") as HTMLAnchorElement | null;
     // Editor links are handled by the CodeMirror tooltip.
-    if (!a || a.closest(".cm-editor") || a.dataset.jiraLinkerTip === "1") {
+    if (!a || a.closest(".cm-editor") || a.dataset.jiraIssueLensTip === "1") {
       return;
     }
     const key = this.keyFromAnchor(a);
     if (!key) {
       return;
     }
-    a.dataset.jiraLinkerTip = "1";
+    a.dataset.jiraIssueLensTip = "1";
     setTooltip(a, `${key}\nLoading...`, { placement: "top", delay: 300 });
     void this.jira.getIssue(key).then((result) => {
       setTooltip(a, cardText(result, key), { placement: "top", delay: 300 });
@@ -100,7 +100,7 @@ export default class JiraLinkerPlugin extends Plugin {
         a.dispatchEvent(new MouseEvent("mouseenter", { bubbles: false }));
       }
     }).finally(() => {
-      delete a.dataset.jiraLinkerTip;
+      delete a.dataset.jiraIssueLensTip;
     });
   }
 }
